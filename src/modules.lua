@@ -4,8 +4,8 @@ local XPRT = {
 	},
 	_VERSION = '1.1'
 }
-package.path = package.path..';C:\\repos\\apf-src\\src\\lib\\?.lua'
-package.cpath = package.cpath..';C:\\repos\\apf-src\\src\\lib\\?.dll'
+package.path = package.path..';C:\\repos\\apf\\src\\lib\\?.lua'
+package.cpath = package.cpath..';C:\\repos\\apf\\src\\lib\\?.dll'
 local lfs = require'lfs'
 local sock = require('socket')
 local http = require('socket.http')
@@ -161,6 +161,11 @@ function XPRT.loadModules()
 	return me, here, there
 end
 
+local function p(var, num)
+	if num == nil then var = var + 1 else var = var + num end
+	return var
+end
+
 function XPRT.init()
 	local _, _l, _r = XPRT.loadModules()
 	local guseong = { _l, _r }
@@ -172,12 +177,16 @@ function XPRT.init()
 		end
 	end
 
-	_A, _L, _R = {}, {}, {}
-	for i = 1,2 do for _, v in ipairs(bongwan[i]) do if i == 1 then table.insert(_L, v[1]) else table.insert(_R, v[1]) end end end
-	for _, v in ipairs 
-
+	local ms = { {}, {}, {} }
 	for _, v in ipairs(bongwan[1]) do
-		--if v[4] == nil then v[4] = 0 end
+		local matches = 0
+		for _, w in ipairs(bongwan[2]) do
+			if v[1] == w[1] then matches = matches + 1 end
+		end
+		if matches > 0 then table.insert(ms[1], v) end
+	end
+
+	for _, v in ipairs(ms[1]) do
 		for _, w in ipairs(v) do print(w) end
 	end
 
