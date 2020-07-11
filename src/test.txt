@@ -1,0 +1,4 @@
+package.path = package.path..';C:\\repos\\apf-src\\src\\lib\\?.lua'
+package.cpath = package.path..';C:\\repos\\apf-src\\src\\lib\\?.dll'
+local meta = require'socket'
+print(socket._VERSION)

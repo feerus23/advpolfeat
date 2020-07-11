@@ -1,0 +1,7 @@
+{
+	"NAVGMSTR": [ "modules.navm", "apf.io/modules/navm.lua"],
+	"CRSCNTRL": [ "modules.cruise", "apf.io/modules/cruise.lua"],
+	"CUSEMLIST": [ "modules.cusemlist", "apf.io/modules/cusemlist.lua"],
+	"NEWTEST": [ "modules.newTest", "apf.io/modules/ntest.lua"],
+	"APFHUD": [ "modules.apfhud", "apf.io/modules/apfhud.lua"]
+}
