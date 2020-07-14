@@ -1,4 +1,4 @@
--- Navigation Master for AdvPolFeat
+-- EXAMPLE
 -- Author: Fuexie
 example = {
 	_id = 'EXAMPLE', -- DONT CHANGE THIS PARAMETER!!!
@@ -7,7 +7,7 @@ example = {
 }
 
 function example.init()
-	return 'EXAMPLE'
+	return example._id
 end
 
 return example

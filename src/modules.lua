@@ -8,15 +8,12 @@ package.path = package.path..';C:\\repos\\apf\\src\\lib\\?.lua'
 package.cpath = package.cpath..';C:\\repos\\apf\\src\\lib\\?.dll'
 
 local lfs = require'lfs'
-local sock = require('socket')
-local http = require('socket.http')
 local https = require('ssl.https')
 
 local json_url = 'https://raw.githubusercontent.com/fuexie/advpolfeat/master/data/modules_list.json'
-local modules = {}
 
 local function jsonRead(text)
-	return require('lib.json').decode(text)
+	return require('json').decode(text)
 end
 
 local function lmd()
@@ -28,11 +25,11 @@ local function lmd()
       local path = 'modules.'..fgs
       local m = require(path)
       if m._id ~= nil then
-        md[m._id] = { path, m._author, m._dlu }
+        md[m._id] = { path, m._dlu, m._author }
       end
     end
   end
-
+print('debil-lmd')
   return md
 end
 
@@ -47,9 +44,36 @@ local function rmd()
       md[k] = v
     end
   end
-
+print('debil-rmd')
   return md
 end
 
-function XPRT.init()
+
+local function loadMods()
+  local l, r = lmd(), rmd()
+  local official, third, undwn = {}, {}, {}
+
+  --[[for k, v in pairs(l) do
+    local matches = 0
+    for k2, v2 in pairs(r) do
+      if k == k2 and v[1] == v[1] and v[2] == v[2] and v[3] == v[3] then
+        matches = matches + 1
+      end
+    end
+    if matches > 0 then official[k] = v else third[k] = v end
+  end]]
+
+  return official, third, undwn
 end
+
+function XPRT.init()
+  print('debil-init')
+  local o, t, u = loadMods()
+
+
+  for k, v in pairs(o) do
+    print(k..' : '..v)
+  end
+end
+
+XPRT.init()
