@@ -4,4 +4,3 @@
 	"NEWTEST": [ "modules.newtest", "apf.io/modules/newtest.lua", "Fuexie"],
 	"TESTEX": [ "modules.testEx", "apf.io/modules/testEx.lua", "Fuexie"]
 }
-pidor
