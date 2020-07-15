@@ -29,7 +29,6 @@ local function lmd()
       end
     end
   end
-print('debil-lmd')
   return md
 end
 
@@ -44,7 +43,6 @@ local function rmd()
       md[k] = v
     end
   end
-print('debil-rmd')
   return md
 end
 
@@ -53,26 +51,35 @@ local function loadMods()
   local l, r = lmd(), rmd()
   local official, third, undwn = {}, {}, {}
 
-  --[[for k, v in pairs(l) do
+  for k, v in pairs(l) do
     local matches = 0
     for k2, v2 in pairs(r) do
-      if k == k2 and v[1] == v[1] and v[2] == v[2] and v[3] == v[3] then
+      if k == k2 and v[1] == v2[1] and v[2] == v2[2] and v2[3] == v2[3] then
         matches = matches + 1
       end
     end
     if matches > 0 then official[k] = v else third[k] = v end
-  end]]
+  end
+
+	for k, v in pairs(r) do
+		local matches = 0
+		for k2, v2 in pairs(l) do
+			if k == k2 and v[1] == v2[1] and v[2] == v2[2] and v[3] == v2[3] then
+				matches = matches + 1
+			end
+		end
+		if matches == 0 then undwn[k] = v end
+	end
 
   return official, third, undwn
 end
 
 function XPRT.init()
-  print('debil-init')
-  local o, t, u = loadMods()
+  local of, th, un = loadMods()
 
 
-  for k, v in pairs(o) do
-    print(k..' : '..v)
+  for k, v in pairs(th) do
+    print(k..' : '..v[1]..' ; '..v[2]..' ; '..v[3])
   end
 end
 
