@@ -1,5 +1,10 @@
 -- AUTHOR: Fuexie
 -- For module ExtendedStrobescopes
+local strobe = {
+	_id = 'STROBE', -- DONT CHANGE THIS PARAMETER!!!
+	_dlu = 'apf.io/modules/strobe.lua', -- AND THIS PARAMETER DONT CHANGE!!!
+	_author = 'Fuexie'
+}
 
 local scr_data = {
 	setup = nil,
@@ -112,7 +117,7 @@ local function read_apf(path)
 end
 
 local _es_init = {}
-function es_init()
+function strobe.init()
 	for i = 1, #list_apf do
 		local vc = read_apf(list_apf[i])
 		if #_es_init == 0 then
@@ -157,19 +162,13 @@ local function es_strobe(v_id, c_id)
 	end
 end]]
 
-function es_main()
-	es_init()
-	es_strobe(400,1)
+function strobe.main()
+	strobe.init()
+	strobe.init_table = _es_init
+	--es_strobe(400,1)
 end
 --print(_es_init[2].num_of_config) -- one more too debug
 
 es_main()
 
-return {
-	_id = 'STROBE', -- DONT CHANGE THIS PARAMETER!!!
-	_dlu = 'apf.io/modules/strobe.lua', -- AND THIS PARAMETER DONT CHANGE!!!
-	_author = 'Fuexie',
-	init = es_init,
-	_init = _es_init,
-	main = es_main
-}
+return strobe

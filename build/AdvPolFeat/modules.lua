@@ -8,7 +8,7 @@ package.path = package.path..';C:\\repos\\apf\\build\\lib\\?.lua'
 package.cpath = package.cpath..';C:\\repos\\apf\\build\\lib\\?.dll'
 
 local lfs = require'lfs'
-local https = require('https')
+local https = require('ssl.https')
 
 local json_url = 'https://raw.githubusercontent.com/fuexie/advpolfeat/master/data/modules_list.json'
 
