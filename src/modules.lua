@@ -75,12 +75,20 @@ local function loadMods()
 end
 
 function XPRT.init()
-  local of, th, un = loadMods()
+	local full_modules_information_table = {}
+	full_modules_information_table[1], full_modules_information_table[2], full_modules_information_table[3] = loadMods()
+	path_of_modules_table = { {}, {}, {} }
 
+	for i = 1, 3 do
+	  for k, v in pairs(full_modules_information_table[i]) do
+			table.insert(path_of_modules_table[i], v[1])
+	    --print(k..' : '..v[1]..' ; '..v[2]..' ; '..v[3])
+	  end
+	end
 
-  for k, v in pairs(th) do
-    print(k..' : '..v[1]..' ; '..v[2]..' ; '..v[3])
-  end
+	return path_of_modules_table, full_modules_information_table
 end
 
 XPRT.init()
+
+return XPRT

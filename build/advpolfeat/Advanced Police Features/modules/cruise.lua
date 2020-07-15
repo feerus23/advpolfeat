@@ -1,2 +1,0 @@
--- Cruise control module for AdvPolFeat
--- Author: Fuexie
