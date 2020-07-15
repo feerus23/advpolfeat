@@ -4,8 +4,8 @@ local XPRT = {
 	},
 	_VERSION = '1.1'
 }
-package.path = package.path..';C:\\repos\\apf\\src\\lib\\?.lua'
-package.cpath = package.cpath..';C:\\repos\\apf\\src\\lib\\?.dll'
+package.path = package.path..';C:\\repos\\apf\\build\\lib\\?.lua'
+package.cpath = package.cpath..';C:\\repos\\apf\\build\\lib\\?.dll'
 
 local lfs = require'lfs'
 local https = require('ssl.https')
