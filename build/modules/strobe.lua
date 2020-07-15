@@ -81,21 +81,21 @@ local function read_apf(path)
 	for line in cfgl:lines() do
 		local sym = {}
 		for _, c in chars(line) do
-			if not c:match('#') then 
-				if not c:match('%s') then 
+			if not c:match('#') then
+				if not c:match('%s') then
 					if c ~= ',' and c ~= ';' then
 						tbl_add(tmp, kz, c)
 					else
 						kz = kz + 1
 					end
-					sym[#sym+1] = c 
+					sym[#sym+1] = c
 				end
 			else
 				break
 			end
 		end
 	end
-	
+
 	aqparat.vehicle_id = tonumber(tmp[1])
 	aqparat.num_of_config = tonumber(tmp[2])
 	aqparat.state = tonumber(tmp[3])
@@ -107,7 +107,7 @@ local function read_apf(path)
 	for i = 6 + aqparat.nors, 6 + aqparat.nors + aqparat.nols do
 		table.insert(aqparat.ll, tmp[i])
 	end
-	
+
 	return aqparat
 end
 
@@ -166,7 +166,9 @@ end
 es_main()
 
 return {
-	_AUTHOR = 'Fuexie',
+	_id = 'STROBE', -- DONT CHANGE THIS PARAMETER!!!
+	_dlu = 'apf.io/modules/strobe.lua', -- AND THIS PARAMETER DONT CHANGE!!!
+	_author = 'Fuexie',
 	init = es_init,
 	_init = _es_init,
 	main = es_main
