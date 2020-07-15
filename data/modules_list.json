@@ -1,4 +1,6 @@
 {
 	"EXAMPLE": [ "modules.example", "apf.io/modules/example.lua", "Fuexie"],
-	"TEST": [ "modules.test", "apf.io/modules/test.lua", "Fuexie"]
+	"TEST": [ "modules.test", "apf.io/modules/test.lua", "Fuexie"],
+	"NEWTEST": [ "modules.ntest", "apf.io/modules/ntest.lua", "Fuexie"],
+	"TESTEX": [ "modules.testEx", "apf.io/modules/testEx.lua", "Fuexie"]
 }
