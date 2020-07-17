@@ -4,35 +4,35 @@ local XPRT = {
 	},
 	_VERSION = '2.0' -- Быдловерсия
 }
-package.path = package.path..';C:\\repos\\apf\\build\\lib\\?.lua'
-package.cpath = package.cpath..';C:\\repos\\apf\\build\\lib\\?.dll'
 
 local lfs = require'lfs'
-local https = require('https')
+local https = require'https'
 
 local json_url = 'https://raw.githubusercontent.com/fuexie/advpolfeat/master/data/modules_list.json'
 
-local function jsonRead(text)
+function jsonRead(text)
 	return require('json').decode(text)
 end
 
-local function lmd()
+function XPRT.lmd()
   local md = {}
 
-  for file in lfs.dir('modules\\') do
+  for file in lfs.dir(getWorkingDirectory()..'\\AdvPolFeat\\modules\\') do
     if file ~= '.' and file ~= '..' then
+			--print(file)
       local fgs = file:gsub('.lua','')
-      local path = 'modules.'..fgs
+      local path = 'AdvPolFeat.modules.'..fgs
       local m = require(path)
       if m._id ~= nil then
         md[m._id] = { path, m._dlu, m._author }
       end
+			--print(md[m._id][1])
     end
   end
   return md
 end
 
-local function rmd()
+function XPRT.rmd()
   local md = {}
 
   local b, c, h, s = https.request(json_url)
@@ -47,8 +47,8 @@ local function rmd()
 end
 
 
-local function loadMods()
-  local l, r = lmd(), rmd()
+function loadMods()
+  local l, r = XPRT.lmd(), XPRT.rmd()
   local official, third, undwn = {}, {}, {}
 
   for k, v in pairs(l) do
