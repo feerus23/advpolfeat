@@ -9,7 +9,7 @@ local strobe = {
 local scr_data = {
 	setup = nil,
 	main_dir = getWorkingDirectory()..'\\AdvPolFeat\\',
-	cfg_dir = getWorkingDirectory()..'\\AdvPolFeat\\APF\\'
+	cfg_dir = getWorkingDirectory()..'\\AdvPolFeat\\PESC\\'
 }
 local list_apf = {}
 local lfs = require"lfs"
@@ -55,14 +55,16 @@ function ti2t(tbl1, tbl2, name)
 	end
 end
 
-if isDir(scr_data.cfg_dir) then
-	for file in lfs.dir(scr_data.cfg_dir) do
-		list_apf[#list_apf+1] = file
+function checkDirectory()
+	if isDir(scr_data.cfg_dir) then
+		for file in lfs.dir(scr_data.cfg_dir) do
+			if file:match('^(.+)(%.pesc)$') then list_apf[#list_apf+1] = file end
+		end
+		--for i=1,2 do table.remove(list_apf, 1) end
+	else
+		lfs.mkdir(scr_data.cfg_dir)
+		scr_data.setup = false
 	end
-	for i=1,2 do table.remove(list_apf, 1) end
-else
-	lfs.mkdir(scr_data.cfg_dir)
-	scr_data.setup = false
 end
 
 function read_apf(path)
@@ -116,18 +118,18 @@ function read_apf(path)
 	return aqparat
 end
 
-local _es_init = {}
+local strobe.init_table = {}
 function strobe.init()
 	for i = 1, #list_apf do
 		local vc = read_apf(list_apf[i])
-		if #_es_init == 0 then
-			ti2t(_es_init, vc, i)
+		if #strobe.init_table == 0 then
+			ti2t(strobe.init_table, vc, i)
 		else
-			for j = 1, #_es_init do
-				if _es_init[j].vehicle_id == vc.vehicle_id and _es_init[j].num_of_config == vc.num_of_config then
+			for j = 1, #strobe.init_table do
+				if strobe.init_table[j].vehicle_id == vc.vehicle_id and strobe.init_table[j].num_of_config == vc.num_of_config then
 					return print('Ошибка при инициализации. Cуществуют файлы с одинаковым значением vehicle_id и num_of_config')
 				else
-					ti2t(_es_init, vc, i)
+					ti2t(strobe.init_table, vc, i)
 				end
 			end
 		end
@@ -136,7 +138,7 @@ end
 
 --[[
 function es_strobe(v_id, c_id)
-	local ei = _es_init
+	local ei = strobe.init_table
 	for i = 1, #ei do
 		if v_id == ei[i].vehicle_id and c_id == ei[i].num_of_config then
 			local _r = coroutine.create(function() for _, v in pairs(ei[i].rl) do
@@ -157,10 +159,10 @@ function es_strobe(v_id, c_id)
 end]]
 
 function strobe.main()
+	checkDirectory()
 	strobe.init()
-	strobe.init_table = _es_init
 	--es_strobe(400,1)
 end
---print(_es_init[2].num_of_config) -- one more too debug
+--print(strobe.init_table[2].num_of_config) -- one more too debug
 
 return strobe
