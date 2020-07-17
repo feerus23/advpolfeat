@@ -2,7 +2,7 @@ local XPRT = {
 	_AUTHORS = {
 		'Fuexie'
 	},
-	_VERSION = '2.0' -- Быдловерсия
+	_VER = '2.0' -- Быдловерсия
 }
 
 local lfs = require'lfs'
