@@ -6,7 +6,11 @@ example = {
 	_author = 'Fuexie'
 }
 
-function example.init()
+function example.init() -- функция инициализации
+	return example._id
+end
+
+function example.main() -- основная функция
 	return example._id
 end
 
