@@ -8,13 +8,14 @@ local imgui = require'imgui'
 local lfs = require'lfs'
 local encoding = require'encoding'
 local inicfg = require 'inicfg'
-local https = require'https'
+local request = require'requests'
+local fxs = require'fxss'
 
 encoding.default = 'CP1251'
 local u8 = encoding.UTF8
 
 ----[============================================> меч епта
--- Переменные, функции и другое барахло
+-- Всякая хуйня
 function siter (s, i)
 	if i < #s then i = i + 1 return i, s:sub(i, i) end
 end
@@ -23,7 +24,70 @@ function chars(s)
 	return siter, s, 0
 end
 
+function imgui.TextC(text)
+  local style = imgui.GetStyle()
+  local colors = style.Colors
+  local ImVec4 = imgui.ImVec4
+
+  local explode_argb = function(argb)
+    local a = bit.band(bit.rshift(argb, 24), 0xFF)
+    local r = bit.band(bit.rshift(argb, 16), 0xFF)
+    local g = bit.band(bit.rshift(argb, 8), 0xFF)
+    local b = bit.band(argb, 0xFF)
+    return a, r, g, b
+  end
+
+  local getcolor = function(color)
+    if color:sub(1, 6):upper() == 'SSSSSS' then
+      local r, g, b = colors[1].x, colors[1].y, colors[1].z
+      local a = tonumber(color:sub(7, 8), 16) or colors[1].w * 255
+      return ImVec4(r, g, b, a / 255)
+    end
+    local color = type(color) == 'string' and tonumber(color, 16) or color
+    if type(color) ~= 'number' then return end
+    local r, g, b, a = explode_argb(color)
+    return imgui.ImColor(r, g, b, a):GetVec4()
+  end
+
+  local render_text = function(text_)
+    for w in text_:gmatch('[^\r\n]+') do
+      local text, colors_, m = {}, {}, 1
+      w = w:gsub('{(......)}', '{%1FF}')
+      while w:find('{........}') do
+        local n, k = w:find('{........}')
+        local color = getcolor(w:sub(n + 1, k - 1))
+        if color then
+          text[#text], text[#text + 1] = w:sub(m, n - 1), w:sub(k + 1, #w)
+          colors_[#colors_ + 1] = color
+          m = n
+        end
+        w = w:sub(1, n - 1) .. w:sub(k + 1, #w)
+      end
+      if text[0] then
+          for i = 0, #text do
+            imgui.TextColored(colors_[i] or colors[1], u8(text[i]))
+            imgui.SameLine(nil, 0)
+          end
+          imgui.NewLine()
+      else imgui.Text(u8(w)) end
+    end
+  end
+
+  render_text(text)
+end
+
 local reg_cmd = sampRegisterChatCommand
+
+local lang_empty = {
+	["russian"] = {
+		["window_title"] = { },
+		["window_content"] = { }
+	},
+	["english"] = {
+		["window_title"] = { },
+		["window_content"] = { }
+	}
+}
 
 local data = {
 	["dynamic_data"] = {
@@ -33,13 +97,14 @@ local data = {
 	},
 	["static_data"] = {
 		["main_path"] = getWorkingDirectory()..'\\AdvPolFeat',
-		["json_settings_path"] = getWorkingDirectory()..'\\AdvPolFeat\\settings.json',
+		["json_settings_path"] = getWorkingDirectory()..'\\AdvPolFeat\\json\\settings.json',
+		["json_folder_path"] = getWorkingDirectory()..'\\AdvPolFeat\\json',
 		["colors"] = {
 			["default"] = 0xD4D4D4
 		},
 		["download_url"] = {
 			["load.lua"] = "https://raw.githubusercontent.com/fuexie/advpolfeat/master/build/AdvPolFeat/load.lua",
-			["language.json"] = "https://raw.githubusercontent.com/fuexie/advpolfeat/master/build/AdvPolFeat/language.json"
+			["language.json"] = "https://raw.githubusercontent.com/fuexie/advpolfeat/master/build/AdvPolFeat/json/language.json"
 		},
 		["developer_telegram"] = "t.me/fuexie"
 	}
@@ -49,6 +114,7 @@ local dyn_data = data["dynamic_data"]
 local sdata = data["static_data"]
 local mspath = sdata["main_path"]
 local jspath = sdata["json_settings_path"]
+local jpath = sdata["json_folder_path"]
 
 local COL_DEF = sdata["colors"]["default"]
 
@@ -58,7 +124,7 @@ function jsonConfigSave(tab, path)
 		return nil, err
 	end
 	local tbl = require'json'.encode(tab)
-	f:write(tbl)
+	f:write(tbl) f:close()
 	return true
 end
 
@@ -66,12 +132,15 @@ function jsonConfigLoad(path, tab)
 	if tab == nil then tab = dyn_data end
 	local f, err = io.open(path, 'r')
 	if not f then
-		if not doesDirectoryExist(getWorkingDirectory()..'\\AdvPolFeat\\') then lfs.mkdir(getWorkingDirectory()..'\\AdvPolFeat\\') end
+		if not doesDirectoryExist(mspath) then
+			lfs.mkdir(mspath)
+			if not doesDirectoryExist(jpath) then lfs.mkdir(jpath) end
+		end
 		local jfle = io.open(path, 'w')
 		local tbl = require'json'.encode(tab)
 		jfle:write(tbl)
 		jfle:close()
-		return dyn_data
+		return tab
 	else
 		local cfg = f:read('*a')
 		f:close()
@@ -79,7 +148,7 @@ function jsonConfigLoad(path, tab)
 	end
 end
 
-local ddata = jsonConfigLoad(jspath)
+local ddata = jsonConfigLoad(jspath, dyn_data)
 local lang = ddata["main_language"]
 
 function slm(mes, col1, col2)
@@ -113,18 +182,28 @@ function slm(mes, col1, col2)
 	end
 end
 
-function checkPresenceThirdModules(table)
-	if type(table) == 'table' then
-		local penetration = 0
-		for k, v in pairs(table[2]) do
-			if v ~= nil then
-				penetration = penetration + 1
-			end
-		end
-		if penetration > 0 then
-			return true
-		else
+function internetConnetcion ()
+	local resp = request.get("https://www.google.com/")
+	if not resp.text then
+		return nil, resp.code
+	else
+		return true, nil
+	end
+end
+
+function table.empty(self)
+    for _, _ in pairs(self) do
+        return false
+    end
+    return true
+end
+
+function checkPresenceThirdModules(tab)
+	if type(tab) == 'table' then
+		if table.empty(tab) then
 			return false
+		else
+			return true
 		end
 	else
 		return nil
@@ -156,16 +235,20 @@ end
 function main_init()
 	local init_table, tsum, init_result = {}, 0, false
 	for f in lfs.dir(mspath) do
-		if f ~= '.' or files ~= '..' then
+		if f ~= '.' or f ~= '..' then
+			--print(f)
 			if f == "load.lua" then init_table["load_module"] = true end
-			if f == "language.json" then init_table["language_file"] = true end
 		end
+	end
+	for f in lfs.dir(jpath) do
+		if f == "language.json" then init_table["language_file"] = true end
 	end
 	for k, v in pairs(init_table) do
 		if v == true then tsum = tsum + 1 end
 	end
 	if tsum == 2 then init_result = true end
 
+	--print(init_result, init_table)
 	return init_result, init_table
 end
 
@@ -180,45 +263,87 @@ function data_save(mode)
 end
 
 function createFileFromUrl(url, path)
-	if not io.open(path, 'r') then
-		local tfu, err = https.request(url)
-		if not tfu then return nil, err end
-		local tfh = io.open(path, 'w')
-		tfh:write(tfu)
+	local download_start = function (u, p)
+		local resp = request.get(u)
+		if not resp.text then return nil, resp.code, 1 end
+		local tfh = io.open(p, 'w')
+		tfh:write(resp.text)
 		return true
+	end
+	if not io.open(path, 'r') then
+		return download_start(url, path)
 	else
-		return nil, 'Error: '..path..': this file does exist'
+		os.execute('DEL '..path)
+		return download_start(url, path)
+		--return nil, 'Error: '..path..': this file does exist', 2
 	end
 end
 
 function downloadScriptFolder()
-	if doesDirectoryExist(mspath) then lfs.rmdir(mspath) lfs.mkdir(mspath) end
+	local errs = {}
+	local fcount = 0
+	if doesDirectoryExist(mspath) then
+		lfs.rmdir(mspath)
+		lfs.mkdir(mspath) lfs.mkdir(mspath..'\\modules')
+	end
 	for k, v in pairs(sdata["download_url"]) do
-		hndl, err = createFileFromUrl(sdata["download_url"][k], mspath..'\\'..k)
+		if k:find('.json') then
+			hndl, err = createFileFromUrl(sdata["download_url"][k], jpath..'\\'..k)
+		else
+			hndl, err = createFileFromUrl(sdata["download_url"][k], mspath..'\\'..k)
+		end
 		if hndl then
+			fcount = fcount + 1
 			--return true
 		else
-			print(err)
+			table.insert(errs, v..': '..err)
 			--return err
 		end
 	end
+	if fcount == 2 then
+		return true
+	else
+		return false, errs
+	end
 end
+
+local phrases = jsonConfigLoad(jpath..'\\language.json', lang_empty)
+local wintit = phrases[lang]["window_title"]
+local wincon = phrases[lang]["window_content"]
+local first_imgui_start, tm_showed = true, false
+local str = { }
 
 ----[============================================> меч епта
 -- Имхуй
 local ws = {
-	['main'] = imgui.ImBool(false)
+	['start'] = imgui.ImBool(false),
+	['main'] = imgui.ImBool(false),
+	['tmd'] = imgui.ImBool(false)
 }
 
+local background = imgui.CreateTextureFromFile('C:\\Users\\SuperUser\\Downloads\\new\\BYcKAf.jpg')
+
+local stl 			= imgui.GetStyle()
+local c 				= stl.Colors
+local clr				= imgui.Col
+local IV4 			= imgui.ImVec4
+
 function imgui.OnDrawFrame()
-	--local pomt, fmit = mld.init() -- pomt - Path of modules table; fmit - Full module information module
 	if ws['main'].v then
-		--imgui.ShowTestWindow(ws["main"])
-		--imgui.SetNextWindowPos(imgui.ImVec2(1050,635), imgui.Cond.FirstUseEver)
-		--imgui.SetNextWindowSize(imgui.ImVec2(300, 100), imgui.Cond.FirstUseEver)
-		imgui.Begin(u8(phrases[lang]["window_title"]["main"]), ws['main'])
-		--imgui.Text(u8'Test2')
-		--imgui.ShowTestWindow(ws['main'])
+		imgui.Begin(u8(wintit["main"]), ws['main'])
+		if background then
+			local size = imgui.GetWindowSize()
+    	imgui.Image(background, imgui.ImVec2(800, 350), imgui.ImVec2(0,0), imgui.ImVec2(1,1), imgui.ImVec4(1, 1, 1, 0.3))
+    	--ставишь картинку, аргументы функции: собсно текстура, нужные размеры картинки, следующие два аргумента оставь по дефолту (uv0, uv1), дальше цвет картинки (RGBA, в примере непрозрачность 30%) и цвет рамки(в примере не используются)
+		end
+		imgui.AlignTextToFramePadding()
+		imgui.Text(u8(wincon["main"]))
+		imgui.End()
+	end
+	if ws['tmd'].v then
+		str[1] = string.format(wincon["tmd"], 'f1f1f1', 'pohui')
+		imgui.Begin(u8(wintit["tmd"]), ws['tmd'])
+		imgui.TextC(str[1])
 		imgui.End()
 	end
 end
@@ -228,56 +353,86 @@ end
 function main()
 	while not isSampAvailable() do wait(500) end
 	local lsm = localScriptMessage
+	local inCon, err = internetConnetcion()
 	if not main_init() then
 		reg_cmd('apf/stop', cmd_stop) reg_cmd('apf/reset', cmd_reset)
 		if ddata["first_start"] then
-			lsm('Спасибо, что скачали скрипт! Надеюсь он вам пригодится ;-) Если это не ваш первый запуск, обратитесь к разработчику: '..sdata["developer_telegram"], "info")
-			if downloadScriptFolder() then
+			if inCon then
+				lsm('Спасибо, что скачали скрипт! Надеюсь он вам пригодится ;-) Если это не ваш первый запуск, обратитесь к разработчику: '..sdata["developer_telegram"], "info")
 				ddata["first_start"] = false
 				data_save(2)
+			else
+				lsm('У вас отсуствтует подключение к интернету. Без него установка скрипта невозможна.', 'err')
+			end
+		else
+			if inCon then
+				lsm('Если это не ваш первый запуск, и папка скрипта присутствует, то обратитесь к разработчику: '..sdata["developer_telegram"], "err")
+				lsm('Также вы можете сбросить настройки, если писать лень или по другой подобной причине. Используйте: /apf/reset <version> (по стандарту самая новая) {b5b5b5}[функционал выбора версии не реализован]', "info")
+				slm('* Вы можете либо остановить скрипт (/apf/stop), либо откатить настройки (/apf/reset)', COL_DEF)
+				--downloadScriptFolder()
+				print('Дебага не будет')
+				--lsm('', 'warn')
+				--thisScript():unload()
 			else
 				lsm('Проверьте подключение к интернету, и напишите /apf/reset', 'err')
 				lsm('Если вы подключены к интернету, а ошибка не проходит обратитесь к разработчику: '..sdata["developer_telegram"], 'err')
 			end
-		else
-			lsm('Если это не ваш первый запуск, и папка скрипта присутствует, то обратитесь к разработчику: '..sdata["developer_telegram"], "err")
-			lsm('Также вы можете сбросить настройки, если писать лень или по другой подобной причине. Используйте: /apf/reset <version> (по стандарту самая новая) {b5b5b5}[функционал выбора версии не реализован]', "info")
-			slm('* Вы можете либо остановить скрипт (/apf/stop), либо откатить настройки (/apf/reset)', COL_DEF)
-			--downloadScriptFolder()
-			print('Дебага не будет')
-			--lsm('', 'warn')
-			--thisScript():unload()
 		end
 	else
-		mld = require('AdvPolFeat.load')
-		phrases = jsonConfigLoad(mspath..'\\language.json')
-		if ddata["first_start"] then ddata["first_start"] = false data_save() end
-		registerCommands()
+		print('main_init succesfuly finished.')
+		if inCon then
+			fxs.style(1, 9, 3)
+			mld = require('AdvPolFeat.load')
+			if ddata["first_start"] then ddata["first_start"] = false data_save() end
+			registerCommands()
 
-		local pomt, fmit = mld.init()
-		if checkPresenceThirdModules then
-			lsm('При инициализации были обнаружены посторонние модули (неофициальные или пользовательские), если вы не уверены в их безопасности, то удалите их.', "warn")
-			slm('* {b5b5b5} (увидеть их список можно прописав команду /apf/third)', COL_DEF)
-		elseif data["init_message"] == true then
-			lsm('Инициализация прошла успешно!', "info")
-		end
-		while true do
-			wait(0)
-			imgui.Process = ws['main'].v
+			pomt, fmit = mld.init()
+			if checkPresenceThirdModules(pomt[2]) then
+				lsm('При инициализации были обнаружены посторонние модули (неофициальные или пользовательские), если вы не уверены в их безопасности, то удалите их.', "warn")
+				slm('* {b5b5b5} (увидеть их список можно прописав команду /apf/third)', COL_DEF)
+			elseif ddata["init_message"] == true then
+				lsm('Инициализация прошла успешно!', "info")
+			end
+			while true do
+				wait(0)
+				imgui.Process = ws['main'].v or ws['tmd'].v
+			end
+		else
+			lsm('Отсутствует подключение к интернету', 'err')
+			print(err)
 		end
 	end
 end
 
 
 function registerCommands()
-  reg_cmd("apf/gui", function() ws['main'].v = not ws['main'].v end)
+	reg_cmd("apf", cmd_help)
+	reg_cmd("apf/help", cmd_help)
+  reg_cmd("apf/gui", cmd_gui)
 	reg_cmd("apf/third", cmd_third)
 	reg_cmd("apf/official", cmd_official)
 end
 
+function cmd_gui()
+	if checkPresenceThirdModules(pomt[2]) and first_imgui_start then
+		first_imgui_start = false
+		lua_thread.create(
+		function ()
+			ws['tmd'].v = true
+			while ws['tmd'].v do
+				wait(0)
+			end
+			ws['main'].v = true
+		end)
+	else
+		if ws['tmd'].v == true then ws['tmd'].v = false end
+		ws['main'].v = not ws['main'].v
+	end
+end
+
 function cmd_stop()
 	lua_thread.create(function ()
-		localScriptMessage('Работа скрипта прекратится через 3 секунды.', 'info')
+		localScriptMessage('Скрипт будет остановлен через 3 секунды.', 'info')
 		wait(3000)
 		thisScript():unload()
 	end)
@@ -286,18 +441,26 @@ end
 function cmd_reset(ver) -- Args: <version> [функционал выбора версии не реализован]
 	lua_thread.create(function ()
 		localScriptMessage('Скрипт будет переустановлен', 'info')
-		if downloadScriptFolder() then
-			localScriptMessage('Скрипт успешно переустановлен. Через 3 секунды скрипт перезагрузится', 'info')
-			for i=1,3 do wait(1000) print(i) end
+		local h, errs = downloadScriptFolder()
+		if h then
+		localScriptMessage('Скрипт успешно переустановлен. Через 3 секунды скрипт перезагрузится', 'info')
 			thisScript():reload()
+		else
+			localScriptMessage('Проверьте подключение к интернету', 'err')
+			for _, v in ipairs(errs) do
+				print(v)
+			end
 		end
 	end)
 end
 
 function cmd_third()
-	local pomt, fmit = mld.init()
-	for k, v in pairs(fmit[2]) do
-		slm('* Идентификатор стороннего модуля: {f09651}'..k..'{d4d4d4}.', COL_DEF)
-		slm('* Путь к нему: {f09651}'..getWorkingDirectory()..'\\'..v[1]:gsub('%.','\\')..'.lua', COL_DEF)
+	if checkPresenceThirdModules(pomt[2]) then
+		for k, v in pairs(fmit[2]) do
+			slm('* Идентификатор стороннего модуля: {f09651}'..k..'{d4d4d4}.', COL_DEF)
+			slm('* Путь к нему: {f09651}'..getWorkingDirectory()..'\\'..v[1]:gsub('%.','\\')..'.lua', COL_DEF)
+		end
+	else
+		localScriptMessage('Посторонних модулей не обнаружено!', 'info')
 	end
 end
