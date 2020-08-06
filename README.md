@@ -30,6 +30,68 @@
 
 В скором времени планируется оную написать.
 
+## Перевод или участие в разработке
+
+Принять участие в переводе модуля или в разработке его достаточно легко. Я конечно не надеюсь, что найдутся те, кто решат внести свою лепту в это творение из говна и палок, но все же быть может…
+
+<details>
+    <summary>Перевод</summary>
+	
+	Чтобы помочь в переводе модуля, скачайте или скопируйте файл language.json находящийся по пути в репозитории build/AdvPolFeat/json/language.json
+	
+	Далее перед вами предстанет такой код или подобный
+	
+	```json
+	{
+		"russian": {
+			"window_title": {
+				"main": "Advanced Police Features - Меню",
+				"tmd": "[ПРЕДУПРЕЖДЕНИЕ] Advanced Police Features - сторонние модули"
+			},
+			"window_content":{
+				"main": "Гучи флип флапс",
+				"tmd": "Во время инициализации были обнаружены {d65227}посторонние{%s} модули\nЕсли вы не уверены в них, то удалите. Список:\n%s"
+			}
+		}
+	}
+	```
+	
+	Ну или подобный, не суть. Что вам потребуется сделать? Создать в нем ещё один массив на уровне с «russian» назвав его требуемым языком в английском переводе. Напр.
+	
+	```json
+	{
+		"russian": {
+			"window_title": {
+				"main": "Advanced Police Features - Меню",
+				"tmd": "[ПРЕДУПРЕЖДЕНИЕ] Advanced Police Features - сторонние модули"
+			},
+			"window_content":{
+				"main": "Гучи флип флапс",
+				"tmd": "Во время инициализации были обнаружены {d65227}посторонние{%s} модули\nЕсли вы не уверены в них, то удалите. Список:\n%s"
+			}
+		},
+		"english": {
+			"window_title": {
+				"main": "Advanced Police Features - Menu",
+				"tmd": "[WARNING] Advanced Police Features - third modules"
+			},
+			"window_content": {
+				"main": "Gucci flip flaps",
+				"tmd": "During initialization, {d65227}third{%s} modules were detected\nIf you are not sure about them, delete them. List:\n%s"
+			}
+		}
+	}
+	```
+	
+	Пока существует возможность перевода только окон imgui.
+</details>
+
+<details>
+	<summary>Участие в разработке</summary>
+	
+	Ну... Через инструменты гитхаба, либо отпишите мне в [телеграм](t.me/fuexie) 
+</details>
+
 ## Пожертвования
 
 Поскольку автор болен хроническим даблаебизмом (см. https://www.youtube.com/watch?v=ay1hLvWna7c **Таймкод 6:22**) я (автор) собираю деньги на его лечение (автора).
@@ -37,4 +99,4 @@
 Реквизиты:
 
 - https://qiwi.com/n/fuexie
-- https://donationalerts.com/r/fuexie
+- https://donationalerts.com/r/fuexie 
