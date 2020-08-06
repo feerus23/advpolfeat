@@ -9,9 +9,14 @@ local lfs = require'lfs'
 local https = require'https'
 
 local json_url = 'https://raw.githubusercontent.com/fuexie/advpolfeat/master/data/modules_list.json'
+package.path = package.path..';'..getWorkingDirectory()..'\\AdvPolFeat\\modules\\?.Lua'
 
 function jsonRead(text)
 	return require('json').decode(text)
+end
+
+function ebanutiyVariant(str)
+	return str:gsub('%.lua','') or str:gsub('%.Lua','') or str:gsub('%.LUA','')
 end
 
 function XPRT.lmd()
@@ -20,13 +25,15 @@ function XPRT.lmd()
   for file in lfs.dir(getWorkingDirectory()..'\\AdvPolFeat\\modules\\') do
     if file ~= '.' and file ~= '..' then
 			--print(file)
-      local fgs = file:gsub('.lua','')
-      local path = 'AdvPolFeat.modules.'..fgs
-      local m = require(path)
-      if m._id ~= nil then
-        md[m._id] = { path, m._dlu, m._author }
-      end
-			--print(md[m._id][1])
+			if string.match(string.upper(file), '%.LUA') and not file:match('ignore') then
+	      local fgs = file:gsub('%.[lua]*[Lua]*[LUA]*','')
+	      local path = 'AdvPolFeat.modules.'..fgs
+	      local m = require(path)
+	      if m._id ~= nil then
+	        md[m._id] = { path, m._dlu, m._author }
+	      end
+				--print(md[m._id][1])
+			end
     end
   end
   return md
@@ -87,6 +94,11 @@ function XPRT.init()
 	end
 
 	return path_of_modules_table, full_modules_information_table
+end
+
+function XPRT.reload()
+	local o, t, u = XPRT.init()
+	return o, t, u
 end
 
 --XPRT.init()
