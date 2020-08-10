@@ -131,6 +131,12 @@ local function table_instrval(t, p, v)
 	end
 end
 
+local function table_len(t)
+  local count = 0
+  for _ in pairs(t) do count = count + 1 end
+  return count
+end
+
 local function readConfig(path)
 	local tempTable = { rl = {}, ll = {} }
 	local jusTmp, kz = {}, 1
@@ -224,6 +230,24 @@ function strobeReload()
 	strobeOff() strobeOn()
 end
 
+function confNumberSw(t2b)
+	t = {
+		conf = t2b[1],
+		cid = t2b[2],
+		handle = t2b[3]
+	}
+
+	if not t.conf or t.conf == '' then
+		return 1
+	else
+		if t.conf < table_len(_cfiles[t.cid]) then
+			return t.handle.conf + 1
+		else
+			return 1
+		end
+	end
+end
+
 function registerCommands()
 	for k, v in pairs(EXPORT._COMMANDS) do
 		sampRegisterChatCommand(k, v[1])
@@ -240,8 +264,20 @@ function EXPORT.init()
 				--print(file)
 
 				if f then
-					if #_cfiles == 0 or _cfiles[f.vechile_id] == nil then
-						_cfiles[f.vehicle_id] = {
+					if _cfiles[f.vehicle_id] then
+						tpm = {
+							right_state = f.right_state,
+							left_state = f.left_state,
+							corsw = f.count_rlight_sw,
+							colsw = f.count_llight_sw,
+							switches = {
+								right = f.rl,
+								left = f.ll
+							}
+						}
+						table.insert(_cfiles[f.vehicle_id], f.num_of_config, tpm)
+					else
+						tpm = {
 							[f.num_of_config] = {
 								right_state = f.right_state,
 								left_state = f.left_state,
@@ -253,17 +289,7 @@ function EXPORT.init()
 								}
 							}
 						}
-					elseif _cfiles[f.vehicle_id] then
-						_cfiles[f.vehicle_id][f.num_of_config] = {
-							right_state = f.right_state,
-							left_state = f.left_state,
-							corsw = f.count_rlight_sw,
-							colsw = f.count_llight_sw,
-							switches = {
-								right = rl,
-								left = ll
-							}
-						}
+						table.insert(_cfiles, f.vehicle_id, tpm)
 					end
 				end
 
@@ -300,13 +326,20 @@ EXPORT._COMMANDS = {
 	[prfx..'/start'] = {
 		[1] = function(conf)
 			local car = storeCarCharIsInNoSave(PLAYER_PED)
-			if not conf then conf = 1 end
-			print(#_cfiles)
-			--strobe[1](strobe, car, conf)
+			conf = confNumberSw{conf, getCarModel(car), strobe}
+			strobe[1](strobe, car, conf)
 			--print(strobe.cos[0])
-			--strobeOn()
+			strobeOn()
 		end,
-		[2] = 'Use /'..prfx..'/start [configuration number] : to activate stroboscopes.'
+		[2] = 'Use /'..prfx..'/start [configuration number] : to activate stroboscopes or switch configuration.'
+	},
+	[prfx..'/stop'] = {
+		[1] = function()
+			local car = storeCarCharIsInNoSave(PLAYER_PED)
+			strobe[1](strobe, car, 1)
+			strobeOff()
+		end,
+		[2] = 'Use /'..prfx..'/stop: to deactivate stroboscopes'
 	}
 }
 

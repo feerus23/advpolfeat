@@ -1,11 +1,11 @@
 # vehicle_id;
 #
-# num_of_config, state, number_of_rswitches, number_of_lswitches;
+# num_of_config, right_state, left_state, number_of_rswitches, number_of_lswitches;
 # rl_invals_1, rl_invals_2 ... rl_invals_N;
 # ll_invals_1, ll_invals_2 ... ll_invals_N;
 
-400; #vehicle_id
+552; #vehicle_id
 
-1, 1, 5, 6; #num_of_config = 1, state = 1 (it's enable), number_of_rswitches = 5, number_of_lswitches = 6
+1, 1, 0, 5, 6; #num_of_config = 1, right_state = 1 (it's enable), left_state = 1, number_of_rswitches = 5, number_of_lswitches = 6
 1000, 400, 200, 200, 400; #it's waitings
 0, 400, 200, 200, 400, 1000; #it's too

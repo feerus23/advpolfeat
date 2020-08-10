@@ -1,8 +1,10 @@
 script_name('Advanced Police Features')
 script_description('Advanced features for police factions')
-script_version('0.9')
-script_version_number(0900)
+script_version('1.0')
+script_version_number(1000)
 script_author('Fuexie')
+
+local scr = thisScript()
 ----[============================================> меч епта
 local imgui = require'imgui'
 local lfs = require'lfs'
@@ -164,6 +166,7 @@ function slm(mes, col1, col2)
 			if not col_braces then
 				counter = counter + 1
 			end
+
 			if counter > 80 and c == " " then
 				large_mes[line] = large_mes[line]..' ...'
 				line = line + 1
@@ -192,7 +195,7 @@ function internetConnetcion ()
 end
 
 function table.empty(self)
-    for _, _ in pairs(self) do
+    for _ in pairs(self) do
         return false
     end
     return true
@@ -258,7 +261,7 @@ function data_save(mode)
 		ddata = jsonConfigLoad(jspath)
 	elseif mode == 2 then
 		jsonConfigSave(ddata, jspath)
-		thisScript():reload()
+		scr:reload()
 	end
 end
 
@@ -307,6 +310,40 @@ function downloadScriptFolder()
 	end
 end
 
+function getThirdModulesList(tbl)
+	local tmp = { }
+	if checkPresenceThirdModules(tbl) then
+		for k, v in pairs(tbl) do
+			table.insert(tmp, { k, getWorkingDirectory()..'\\'..v[1]:gsub('%.','\\')..'.lua' })
+		end
+		return tmp
+	else
+		return nil, 'third modules doesnt prescence'
+	end
+end
+
+function getTModsListString()
+	local tbl = getThirdModulesList(fmit[2])
+	local tmp = ''
+	for i, v in pairs(tbl) do
+		tmp = tmp..'\n***\nModule name: {f0294a}'..v[1]..'{'..style.text..'}'..'. \nPath to module: {f0294a}'..v[2]..'{'..style.text..'}'..';'
+	end
+	return tmp
+end
+
+function chatSeperator(ty)
+	local seperator_types = {
+		[1] = '=========================================================',
+		[2] = '~==================== [ ADVPOLFEAT ] ====================~',
+		[3] = '*\n*\n*'
+	}
+	if ty < 1 or ty > 3 then
+		return nil
+	else
+		sampAddChatMessage(seperator_types[ty], -1)
+	end
+end
+
 local phrases = jsonConfigLoad(jpath..'\\language.json', lang_empty)
 local wintit = phrases[lang]["window_title"]
 local wincon = phrases[lang]["window_content"]
@@ -314,34 +351,71 @@ local first_imgui_start, tm_showed = true, false
 local str = { }
 
 ----[============================================> меч епта
--- Имхуй
+-- подгрузка модулей
+local mods = {}
+mods.list = {}
+mods.thread = {}
+
+function mods.Requireing()
+	local tmp = require('AdvPolFeat.load').init()
+	for k, v in pairs(tmp[1]) do
+		mods.list[#mods.list+1] = require(v)
+	end
+	for k, v in pairs(tmp[2]) do
+		mods.list[#mods.list+1] = require(v)
+	end
+	if #mods.list == #tmp[2] + #tmp[1] then
+		return true
+	else
+		return nil
+	end
+end
+
+function mods.Run()
+	for i, v in ipairs(mods.list) do
+		mods.thread[i] = lua_thread.create(mods.Process, v)
+	end
+end
+
+function mods.Process(mod)
+	local me = mod.main(scr.version)
+	while true do
+		wait(0)
+		me()
+	end
+end
+
+function mods.Stop()
+	for i, v in ipairs(mods.list) do
+		mods.thread[i]:terminate()
+	end
+end
+
+function mods.Reload()
+	mods.Stop()
+	mods.list = {}
+	require('AdvPolFeat.load').reload()
+	mods.Requireing()
+	mods.Run()
+end
+
+----[============================================> меч епта
+-- имхуй
 local ws = {
 	['start'] = imgui.ImBool(false),
 	['main'] = imgui.ImBool(false),
 	['tmd'] = imgui.ImBool(false)
 }
 
-local background = imgui.CreateTextureFromFile('C:\\Users\\SuperUser\\Downloads\\new\\BYcKAf.jpg')
-
-local stl 			= imgui.GetStyle()
-local c 				= stl.Colors
-local clr				= imgui.Col
-local IV4 			= imgui.ImVec4
-
 function imgui.OnDrawFrame()
 	if ws['main'].v then
 		imgui.Begin(u8(wintit["main"]), ws['main'])
-		if background then
-			local size = imgui.GetWindowSize()
-    	imgui.Image(background, imgui.ImVec2(800, 350), imgui.ImVec2(0,0), imgui.ImVec2(1,1), imgui.ImVec4(1, 1, 1, 0.3))
-    	--ставишь картинку, аргументы функции: собсно текстура, нужные размеры картинки, следующие два аргумента оставь по дефолту (uv0, uv1), дальше цвет картинки (RGBA, в примере непрозрачность 30%) и цвет рамки(в примере не используются)
-		end
-		imgui.AlignTextToFramePadding()
 		imgui.Text(u8(wincon["main"]))
 		imgui.End()
 	end
 	if ws['tmd'].v then
-		str[1] = string.format(wincon["tmd"], 'f1f1f1', 'pohui')
+		local tml = getTModsListString()
+		str[1] = string.format(wincon["tmd"], style.text, tml)
 		imgui.Begin(u8(wintit["tmd"]), ws['tmd'])
 		imgui.TextC(str[1])
 		imgui.End()
@@ -380,12 +454,12 @@ function main()
 		end
 	else
 		print('main_init succesfuly finished.')
-		if inCon then
-			fxs.style(1, 9, 3)
-			mld = require('AdvPolFeat.load')
-			if ddata["first_start"] then ddata["first_start"] = false data_save() end
-			registerCommands()
+		style = fxs.style(1, 9, 3)
+		mld = require('AdvPolFeat.load')
+		if ddata["first_start"] then ddata["first_start"] = false data_save() end
+		registerCommands()
 
+		if inCon then
 			pomt, fmit = mld.init()
 			if checkPresenceThirdModules(pomt[2]) then
 				lsm('При инициализации были обнаружены посторонние модули (неофициальные или пользовательские), если вы не уверены в их безопасности, то удалите их.', "warn")
@@ -455,12 +529,15 @@ function cmd_reset(ver) -- Args: <version> [функционал выбора версии не реализов
 end
 
 function cmd_third()
-	if checkPresenceThirdModules(pomt[2]) then
-		for k, v in pairs(fmit[2]) do
-			slm('* Идентификатор стороннего модуля: {f09651}'..k..'{d4d4d4}.', COL_DEF)
-			slm('* Путь к нему: {f09651}'..getWorkingDirectory()..'\\'..v[1]:gsub('%.','\\')..'.lua', COL_DEF)
-		end
-	else
+	local tmp = getThirdModulesList(fmit[2])
+	if not tmp then
 		localScriptMessage('Посторонних модулей не обнаружено!', 'info')
+	else
+		for i, v in ipairs(tmp) do
+			chatSeperator(3)
+			slm('* Идентификатор стороннего модуля: {f09651}'..v[1]..'{d4d4d4}.', COL_DEF)
+			slm('* Путь к нему: {f09651}'..v[2], COL_DEF)
+			chatSeperator(3)
+		end
 	end
 end
