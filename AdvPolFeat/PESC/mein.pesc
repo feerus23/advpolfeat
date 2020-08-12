@@ -1,0 +1,11 @@
+# vehicle_id;
+#
+# num_of_config, right_state, left_state, number_of_rswitches, number_of_lswitches;
+# rl_invals_1, rl_invals_2 ... rl_invals_N;
+# ll_invals_1, ll_invals_2 ... ll_invals_N;
+
+552;
+
+2, 0, 1, 4, 4;
+200,400,800,200;
+200,400,800,200;
